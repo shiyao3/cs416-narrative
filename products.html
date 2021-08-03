@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>CS 416: Data Visualization</title>
+
+<h2> Revenue Distribution by Product </h2>
+
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: auto;
+  position: relative;
+  width: 960px;
+}
+
+text {
+  font: 10px sans-serif;
+}
+
+form {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+</style>
+<form>
+  <label><input type="radio" name="dataset" value="year2015" checked> 2015</label><br>
+  <label><input type="radio" name="dataset" value="year2016" unchecked> 2016</label><br>
+  <label><input type="radio" name="dataset" value="year2017" unchecked> 2017</label><br>
+  <label><input type="radio" name="dataset" value="year2018" unchecked> 2018</label><br>
+  <label><input type="radio" name="dataset" value="year2019" unchecked> 2019</label><br>
+  <label><input type="radio" name="dataset" value="year2020" unchecked> 2020</label>
+</form>
+
+<div class='my-legend'>
+    <div class='legend-title'>Product Types</div>
+    <div class='legend-scale'>
+      <ul class='legend-labels'>
+        <li><span style='background:#2176b4;'></span>iPhone</li>
+        <li><span style='background:#ff7f10;'></span>iPad</li>
+        <li><span style='background:#2ba02b;'></span>Mac</li>
+        <li><span style='background:#d62727;'></span>Watch, Home, Accessories</li>
+        <li><span style='background:#9267bd;'></span>Services</li>
+      </ul>
+    </div>
+</div>
+    
+<style type='text/css'>
+    .my-legend .legend-title {
+        text-align: left;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 90%;
+        }
+    .my-legend .legend-scale ul {
+        margin: 0;
+        margin-bottom: 5px;
+        padding: 0;
+        float: left;
+        list-style: none;
+        }
+    .my-legend .legend-scale ul li {
+        font-size: 80%;
+        list-style: none;
+        margin-left: 0;
+        line-height: 18px;
+        margin-bottom: 2px;
+        }
+    .my-legend ul.legend-labels li span {
+        display: block;
+        float: left;
+        height: 16px;
+        width: 30px;
+        margin-right: 5px;
+        margin-left: 0;
+        border: 1px solid #999;
+        }
+    </style>
+
+<script src="https://d3js.org/d3.v3.js"></script>
+<script>
+
+var width = 960,
+    height = 500,
+    radius = Math.min(width, height) / 2;
+
+var color = d3.scale.category10();
+
+var pie = d3.layout.pie()
+    .value(function(d) { return d.year2015; })
+    .sort(null);
+
+var arc = d3.svg.arc()
+    .innerRadius(radius - 100)
+    .outerRadius(radius - 20);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+d3.csv("https://raw.githubusercontent.com/shiyao3/cs416-narrative/main/products.csv", type, function(error, data) {
+  if (error) throw error;
+
+  var path = svg.datum(data).selectAll("path")
+      .data(pie)
+    .enter().append("path")
+      .attr("fill", function(d, i) { return color(i); })
+      .attr("d", arc)
+      .each(function(d) { this._current = d; }); // store the initial angles
+
+  d3.selectAll("input")
+      .on("change", change);
+
+  var timeout = setTimeout(function() {
+    d3.select("input[value=\"year2020\"]").property("checked", true).each(change);
+  }, 2000);
+
+  function change() {
+    var value = this.value;
+    clearTimeout(timeout);
+    pie.value(function(d) { return d[value]; }); // change the value function
+    path = path.data(pie); // compute the new angles
+    path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
+  }
+});
+
+function type(d) {
+  d.year2015 = +d.year2015;
+  d.year2016 = +d.year2016;
+  d.year2017 = +d.year2017;
+  d.year2018 = +d.year2018;
+  d.year2019 = +d.year2019;
+  d.year2020 = +d.year2020;
+  return d;
+}
+
+// Store the displayed angles in _current.
+// Then, interpolate from _current to the new angles.
+// During the transition, _current is updated in-place by d3.interpolate.
+function arcTween(a) {
+  var i = d3.interpolate(this._current, a);
+  this._current = i(0);
+  return function(t) {
+    return arc(i(t));
+  };
+}
+
+</script>
+
+<body font-family: "Helvetica Neue"> <br><br>
+    The interactive chart above shows the proportion of revenue each product contributes to Apple's overall revenue.  Examining percentage of revenue contributed by each product type is a good mnetric for analyzing growth. Proportions allows us to evaluate relative growth of each product, since overall (gross) growth is already factored in through proportionality.
+    Over the years, iPhone continues to dominate Apple's source of revenue. In recent years however, Apple Services (Apple pay, Apple TV, Apple Fitness, Apple News, Apple Arcade, Apple Music) increased significantly. 
+    This trend makes sense. Apple has been pushing development and marketing its services aggressively in recent years.
+    Accessories, Watch, Home, Macs, iPads remain relatively stable. This could explain the absence of revenue growth in China, Japan, and the Asia Pacific seen on the previous page. These regions have an abundance of streaming services. In other words, Apple must compete with the existing services in these areas.<br><br>
+    <a href="subscriptions.html">Proceed</a><br><br>
+    <a href="index.html">Previous</a><br><br>
+</body>

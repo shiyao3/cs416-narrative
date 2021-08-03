@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CS 416: Data Visualization</title>
+
+<h2> Apple Services Active Users </h2>
+
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <style type="text/css">
+  svg {
+    font: 10px sans-serif;
+    shape-rendering: crispEdges;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: #000;
+  }
+ 
+  path.domain {
+    stroke: none;
+  }
+ 
+  .y .tick line {
+    stroke: #ddd;
+  }
+
+  body {
+   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+   margin: auto;
+   position: relative;
+   width: 960px;
+ }
+  </style>
+
+</head>
+<body>
+<script type="text/javascript">
+
+var margin = {top: 20, right: 160, bottom: 35, left: 30};
+
+var width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var svg = d3.select("body")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var data = [
+  { year: "2015", Music: "11", News: "0", Others: "19"},
+  { year: "2016", Music: "20", News: "0", Others: "75"},
+  { year: "2017", Music: "27", News: "70", Others: "103"},
+  { year: "2018", Music: "40", News: "85", Others: "200"},
+  { year: "2019", Music: "50", News: "100", Others: "330"},
+  { year: "2020", Music: "72", News: "125", Others: "423"},
+];
+
+var parse = d3.time.format("%Y").parse;
+
+var dataset = d3.layout.stack()(["Others", "News", "Music"].map(function(subscriptions) {
+  return data.map(function(d) {
+    return {x: parse(d.year), y: +d[subscriptions]};
+  });
+}));
+
+var x = d3.scale.ordinal()
+  .domain(dataset[0].map(function(d) { return d.x; }))
+  .rangeRoundBands([10, width-10], 0.02);
+
+var y = d3.scale.linear()
+  .domain([0, d3.max(dataset, function(d) {  return d3.max(d, function(d) { return d.y0 + d.y; });  })])
+  .range([height, 0]);
+
+var colors = ["b33040", "#d25c4d", "#f2b447"];
+
+var yAxis = d3.svg.axis()
+  .scale(y)
+  .orient("left")
+  .ticks(5)
+  .tickSize(-width, 0, 0)
+  .tickFormat( function(d) { return d } );
+
+var xAxis = d3.svg.axis()
+  .scale(x)
+  .orient("bottom")
+  .tickFormat(d3.time.format("%Y"));
+
+svg.append("g")
+  .attr("class", "y axis")
+  .call(yAxis);
+
+svg.append("g")
+  .attr("class", "x axis")
+  .attr("transform", "translate(0," + height + ")")
+  .call(xAxis);
+
+
+var groups = svg.selectAll("g.cost")
+  .data(dataset)
+  .enter().append("g")
+  .attr("class", "cost")
+  .style("fill", function(d, i) { return colors[i]; });
+
+var rect = groups.selectAll("rect")
+  .data(function(d) { return d; })
+  .enter()
+  .append("rect")
+  .attr("x", function(d) { return x(d.x); })
+  .attr("y", function(d) { return y(d.y0 + d.y); })
+  .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+  .attr("width", x.rangeBand())
+  .on("mouseover", function() { tooltip.style("display", null); })
+  .on("mouseout", function() { tooltip.style("display", "none"); })
+  .on("mousemove", function(d) {
+    var xPosition = d3.mouse(this)[0] - 15;
+    var yPosition = d3.mouse(this)[1] - 25;
+    tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+    tooltip.select("text").text(d.y);
+  });
+
+
+// Draw legend
+var legend = svg.selectAll(".legend")
+  .data(colors)
+  .enter().append("g")
+  .attr("class", "legend")
+  .attr("transform", function(d, i) { return "translate(30," + i * 19 + ")"; });
+ 
+legend.append("rect")
+  .attr("x", width - 18)
+  .attr("width", 18)
+  .attr("height", 18)
+  .style("fill", function(d, i) {return colors.slice().reverse()[i];});
+ 
+legend.append("text")
+  .attr("x", width + 5)
+  .attr("y", 9)
+  .attr("dy", ".35em")
+  .style("text-anchor", "start")
+  .text(function(d, i) { 
+    switch (i) {
+      case 0: return "Apple Music";
+      case 1: return "Apple News";
+      case 2: return "Others";
+    }
+  });
+
+var tooltip = svg.append("g")
+  .attr("class", "tooltip")
+  .style("display", "none");
+    
+tooltip.append("rect")
+  .attr("width", 30)
+  .attr("height", 20)
+  .attr("fill", "white")
+  .style("opacity", 0.5);
+
+tooltip.append("text")
+  .attr("x", 15)
+  .attr("dy", "1.2em")
+  .style("text-anchor", "middle")
+  .attr("font-size", "12px")
+  .attr("font-weight", "bold");
+
+</script>
+</body>
+
+<body font-family: "Helvetica Neue"> <br><br>
+    This graph shows the number of active subscribers in millions across various Apple services. Apple services shows tremendous growth but keep in mind however, that most of this growth is likely not in China, Japan, or Asia Pacific but rather in the Americas and Europe.
+    The trend clearly reflects Apple's aggressive marketing its services. What's surprising is how quickly Apple News is able to catch up and exceed Apple Music in terms of number fo subscribers.
+    A likely cause is the fact that Spotify already has a large user base while no consolidated news service exists to compete with Apple News. 
+    The "Others" category includes Apple Arcade, Apple Fitness, and Apple TV. Compared to other services, these are very new and not as mature. 
+    Its aggressive rate of growth is similar to that of Apple News, which is expected since there is currently no significant competitor to these services other than Apple TV. <br><br>
+    <a href="products.html">Previous</a><br><br>
+</body>
+
+</html>
